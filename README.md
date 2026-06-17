@@ -2,9 +2,10 @@
 
 ## Integrantes
 
-* [Nome Completo 1]
-* [Nome Completo 2]
-* [Nome Completo 3]
+* Íris Conceição Candido da Silva 
+* Matheus macedo araújo
+* Renan Pires Andrade
+* Tailane de Santana Brito
 
 ## Turma
 
