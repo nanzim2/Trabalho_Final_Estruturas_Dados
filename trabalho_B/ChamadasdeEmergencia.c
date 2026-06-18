@@ -1,291 +1,217 @@
 #include <stdio.h>
-#include <stdlib.h>
 #include <ctype.h>
 #include <windows.h>
 #include <stdbool.h>
 #include <locale.h>
 #include <string.h>
 
-typedef struct registro{
-    int protocolo;
-    char local[50];
-    char tipo[30];
-    char horario[20];
+#define MAX 10
 
-    struct registro *prox;
-} Registro;
+// PILHAS DINAMICAS LIFO = Última chamada a entrar será a primeira a sair
+/*=============================================================
+    |   CAMPO    |   TIPO     |        DESCRIÇÂO          |
+    |------------|------------|---------------------------|
+    |  protocolo |    int     |  Número único da chamada  |
+    |   local    |  char[50]  |  local da emergência      |
+    |   tipo     |  chat[30]  |  Tipo da ocorrência       |
+    |  horario   |  char[20]  |  Horário da chamada       |
 
-Registro *topo = NULL;
+==============================================================*/
+struct registro{
+    int protocolo;  // começa do 1001
+    char local[50]; // cidade
+    char tipo[30]; // polia - samu - bombeiro
+    char horario[20]; // hh/mm
+};
+
+struct registro rg[MAX];
+
+int topo = -1;
 int protocoloAtual = 1000;
 
-void registrarChamada()
-{
-    Registro *novo = (Registro*) malloc(sizeof(Registro));
 
-    if(novo == NULL){
-        printf("Erro de memoria!\n");
-        return;
-    }
-
-    protocoloAtual++;
-    novo->protocolo = protocoloAtual;
-
-    printf("Protocolo %d\n", protocoloAtual);
-
-    printf("Local: ");
-    fgets(novo->local,50,stdin);
-    novo->local[strcspn(novo->local,"\n")] = '\0';
-
-    printf("Tipo (policia/samu/bombeiro): ");
-    fgets(novo->tipo,30,stdin);
-    novo->tipo[strcspn(novo->tipo,"\n")] = '\0';
-
-    printf("Horario (hh:mm): ");
-    fgets(novo->horario,20,stdin);
-    novo->horario[strcspn(novo->horario,"\n")] = '\0';
-
-    novo->prox = topo;
-    topo = novo;
-
-    printf("Chamada registrada!\n");
+void inicializarPilha(){
+    topo = -1;
+    protocoloAtual = 1000;
 }
 
-void atenderChamada()
-{
-    if(topo == NULL){
+void strLower(char *str){
+    for (int i = 0; str[i] != '\0'; i++){
+        str[i] = tolower(str[i]);
+    }
+    
+}
+
+void imprimir(struct registro r[], int topo, int idc){
+    // verificar lista cheia
+    if(topo == -1){
         printf("Nenhuma chamada registrada!\n");
+        Sleep(2000);
         return;
     }
-
-    Registro *aux = topo;
-
-    printf("\n=== ATENDENDO ===\n");
-    printf("Protocolo: %d\n", aux->protocolo);
-    printf("Local: %s\n", aux->local);
-    printf("Tipo: %s\n", aux->tipo);
-    printf("Horario: %s\n", aux->horario);
-
-    topo = topo->prox;
-
-    free(aux);
-
-    printf("\nChamada atendida!\n");
-}
-
-void consultarUltima()
-{
-    if(topo == NULL){
-        printf("Pilha vazia!\n");
-        return;
-    }
-
-    printf("\n=== ULTIMA CHAMADA ===\n");
-    printf("Protocolo: %d\n", topo->protocolo);
-    printf("Local: %s\n", topo->local);
-    printf("Tipo: %s\n", topo->tipo);
-    printf("Horario: %s\n", topo->horario);
-}
-
-void listar()
-{
-    Registro *aux = topo;
-
-    if(aux == NULL){
-        printf("Pilha vazia!\n");
-        return;
-    }
-
-    while(aux != NULL){
-
-        printf("\nProtocolo: %d\n", aux->protocolo);
-        printf("Local: %s\n", aux->local);
-        printf("Tipo: %s\n", aux->tipo);
-        printf("Horario: %s\n", aux->horario);
-
-        aux = aux->prox;
-    }
-}
-
-void buscarProtocolo()
-{
-    int protocolo;
-    Registro *aux = topo;
-
-    printf("Digite o protocolo: ");
-    scanf("%d",&protocolo);
-    getchar();
-
-    while(aux != NULL){
-
-        if(aux->protocolo == protocolo){
-
-            printf("\nEncontrado!\n");
-            printf("Local: %s\n", aux->local);
-            printf("Tipo: %s\n", aux->tipo);
-            printf("Horario: %s\n", aux->horario);
-
-            return;
+    
+    // imprimir 1 ou toda a lista
+    if (idc >= 0){
+        printf("Protocolo: %d\n", r[idc].protocolo);
+        printf("Local: %s\n", r[idc].local);
+        printf("Tipo: %s\n", r[idc].tipo);
+        printf("Horario: %s\n", r[idc].horario);
+    }else {
+        system("cls");
+        for (int i = 0; i <= topo; i++){
+            printf("Protocolo: %d\n", r[i].protocolo);
+            printf("Local: %s\n", r[i].local);
+            printf("Tipo: %s\n", r[i].tipo);
+            printf("Horario: %s\n", r[i].horario);
+            printf("-------------------\n");
         }
-
-        aux = aux->prox;
+        system("pause");
     }
-
-    printf("Protocolo nao encontrado!\n");
+    return;
 }
 
-void salvarCSV()
-{
-    FILE *arq = fopen("chamadas.csv","w");
+void registrarChamada(struct registro r[], int *topo){
+    system("cls");
+    struct registro novo;
+    bool pass = false;
 
-    printf("Tentando criar arquivo...\n");
-    if(arq == NULL){
-        perror("Erro");
+    printf("=== Registro de Chamadas ===\n");
+
+    //verificar se a pilha esta cheia
+    if(*topo == MAX -1){
+        printf("Registro cheio!\n");
+        Sleep(2000);
         return;
     }
 
-    if(arq == NULL){
-        printf("Erro ao criar arquivo!\n");
-        return;
-    }
+    // Protocolo
+    protocoloAtual++;
+    novo.protocolo = protocoloAtual;
+    printf("Protocolo: %d\n", novo.protocolo);
 
-    Registro *aux = topo;
-
-    fprintf(arq,"protocolo;local;tipo;horario\n");
-
-    while(aux != NULL){
-
-        fprintf(arq,"%d;%s;%s;%s\n",
-            aux->protocolo,
-            aux->local,
-            aux->tipo,
-            aux->horario);
-
-        aux = aux->prox;
-    }
-
-    fclose(arq);
-
-    printf("Arquivo salvo!\n");
-}
-
-void carregarCSV()
-{
-    FILE *arq = fopen("chamadas.csv","r");
-
-    if(arq == NULL)
-        return;
-
-    char linha[200];
-
-    fgets(linha,sizeof(linha),arq);
-
-    while(fgets(linha,sizeof(linha),arq)){
-
-        Registro *novo = (Registro*) malloc(sizeof(Registro));
-
-        if(novo == NULL){
-            printf("Erro de memoria!\n");
-            fclose(arq);
-            return;
-        }
-
-        sscanf(linha,"%d;%49[^;];%29[^;];%19[^\n]",
-               &novo->protocolo,
-               novo->local,
-               novo->tipo,
-               novo->horario);
-
-        if(novo->protocolo > protocoloAtual)
-            protocoloAtual = novo->protocolo;
-
-        novo->prox = topo;
-        topo = novo;
-    }
-
-    fclose(arq);
-}
-
-void liberarPilha()
-{
-    Registro *aux;
-
-    while(topo != NULL){
-
-        aux = topo;
-        topo = topo->prox;
-
-        free(aux);
-    }
-}
-
-int main()
-{
-    int op;
-
-    setlocale(LC_ALL, "Portuguese");
-
-    carregarCSV();
-
+    // local
     do{
-        system("cls");
+        printf("Digite o local: ");
+        fgets(novo.local, sizeof(novo.local), stdin);
+        novo.local[strcspn(novo.local, "\n")] = '\0'; // substitui o \n pelo \0
+        strLower(novo.local);
 
-        printf("===== CHAMADAS DE EMERGENCIA =====\n");
-        printf("1 - Registrar chamada\n");
-        printf("2 - Atender chamada\n");
-        printf("3 - Consultar ultima chamada\n");
-        printf("4 - Listar chamadas\n");
-        printf("5 - Buscar protocolo\n");
-        printf("6 - Salvar arquivo CSV\n");
-        printf("7 - Sair\n");
-        printf("Opcao: ");
+        // verificar se ficou vazio
+        if(novo.local[0] == '\0'){
+            printf("Nenhum local informado!\n");
+            Sleep(2000);
+            pass = false;
+        } else{
+            pass = true;
+        }
+    } while (pass == false);
+
+    // Tipo
+    do{
+        printf("Digite o tipo da emergência(policia, samu, bombeiro): ");
+        fgets(novo.tipo, sizeof(novo.tipo), stdin);
+        novo.tipo[strcspn(novo.tipo, "\n")] = '\0'; // substitui o \n pelo \0
+        strLower(novo.tipo);
+
+        // verificar tipo valido
+        if(strcmp(novo.tipo, "policia") != 0 &&
+           strcmp(novo.tipo, "samu") != 0 &&
+           strcmp(novo.tipo, "bombeiro") != 0){
+            printf("Tipo inválido\n");
+            Sleep(2000);
+            pass = false;
+        } else{
+            pass = true;
+        }
+    } while (pass == false);
+
+    // horario
+    int hora, minuto;
+    do{
+        pass = false;
+
+        printf("digite o horario(hh:mm): ");
+        fgets(novo.horario, sizeof(novo.horario), stdin);
+
+        //verificar se digitou certo
+        if (sscanf(novo.horario, "%d:%d", &hora, &minuto) == 2){
+            if (hora >= 0 && hora <= 23 &&
+                minuto >= 0 && minuto <= 59)
+            {
+                pass = true;
+            }
+        }
+
+        if (!pass){
+            printf("Horario invalido! Use o formato hh:mm\n");
+        }
+
+    } while (pass == false);
+
+    // Empilhar
+    (*topo)++;
+    r[*topo] = novo;
+    printf("Registro realizado com sucesso!\n");
+    Sleep(2000);
+       
+}
+
+void atenderChamada(struct registro r[], int *topo){
+    system("cls");
+    //verificar se esta vazia
+    if(*topo == -1){
+        printf("Nenhuma chamada registrada!\n");
+        Sleep(2000);
+        return;
+    }
+
+    printf("==== Atendendo protocolo ====\n ");
+    imprimir(r, *topo, *topo);
+
+    (*topo)--;
+    system("pause");
+    return;
+}
+
+int main(){
+    int op;
+    system("cls");
+    setlocale(LC_ALL, "portuguese");
+
+    do
+    {
+        printf("=== Chamadas de Emergência ===\n");
+        printf("1. Registrar chamada\n");
+        printf("2. Atender chamada\n");
+        printf("3. Consultar última chamada\n");
+        printf("4. Mostrar todas as chamadas\n");
+        printf("5. Sair\n");
+        printf("Opção: ");
         scanf("%d", &op);
-        getchar();
+        getchar(); //limpar buffet do teclado
 
-        system("cls");
-
-        switch(op)
-        {
-            case 1:
-                registrarChamada();
-                break;
-
-            case 2:
-                atenderChamada();
-                break;
-
-            case 3:
-                consultarUltima();
-                break;
-
-            case 4:
-                listar();
-                break;
-
-            case 5:
-                buscarProtocolo();
-                break;
-
-            case 6:
-                salvarCSV();
-                break;
-
-            case 7:
-                salvarCSV();
-                liberarPilha();
-                printf("Encerrando sistema...\n");
-                break;
-
-            default:
-                printf("Opcao invalida!\n");
+        switch(op){
+        case 1:
+            registrarChamada(rg, &topo);
+            break;
+        case 2:
+            atenderChamada(rg, &topo);
+            break;
+        case 3:
+            imprimir(rg, topo, topo);
+            break;
+        case 4:
+            imprimir(rg, topo, -1);
+            break;
+        case 5:
+            printf("Saindo...\n");
+            Sleep(1000);
+            break;
+        default:
+            printf("Opção invalida!\n");
+            Sleep(1500);
+            break;
         }
-
-        if(op != 7)
-        {
-            printf("\n\nPressione ENTER para continuar...");
-            getchar();
-        }
-
-    }while(op != 7);
-
+    } while (op != 5);
     return 0;
 }
