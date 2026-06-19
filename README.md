@@ -25,7 +25,7 @@ Tema B2 – Chamadas de Emergência
 
 ## Trabalho C
 
-Tema C – Atendimento Bancário
+Tema C1 – Atendimento Bancário
 
 ---
 
