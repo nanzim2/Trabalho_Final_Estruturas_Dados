@@ -2,7 +2,7 @@
 
 ## Integrantes
 
-* Íris Conceição Candido da Silva 
+* Íris Conceição Candido da Silva
 * Matheus Macedo Araújo
 * Renan Pires Andrade
 * Tailane de Santana Brito
@@ -17,11 +17,7 @@ Turma: C
 
 ## Trabalho A
 
-<<<<<<< HEAD
-Tema: Playlist de música
-=======
-Tema A1 — Playlist de Músicas
->>>>>>> 9f27717dcb8179efa5412a81d09a3440f85d842b
+Tema A1 – Playlist de Músicas
 
 ## Trabalho B
 
@@ -29,18 +25,11 @@ Tema B2 – Chamadas de Emergência
 
 ## Trabalho C
 
-Tema: [Informar Tema Escolhido]
+Tema: A definir
 
 ---
 
-<<<<<<< HEAD
-# Descrição dos Programas
-
-## Trabalho A
-
-Programa desenvolvido para atender aos requisitos do Tema A utilizando estruturas de dados implementadas em linguagem C.
-=======
-## Estrutura do Repositório
+# Estrutura do Repositório
 
 ```text
 Trabalho_Final_Estruturas_Dados/
@@ -57,141 +46,47 @@ Trabalho_B/
 
 Trabalho_C/
     trabalho_c.c
-    dados_c.csv
 
 relatorio.md
 ```
+
 ---
 
-## Descrição dos Programas:
+# Descrição dos Programas
 
-### Trabalho A — Playlist de Músicas
+## Trabalho A – Playlist de Músicas
 
-Sistema de gerenciamento de uma playlist de músicas utilizando uma Lista Duplamente Encadeada Dinâmica.
+Sistema de gerenciamento de uma playlist de músicas.
 
 Cada música possui:
 
 * ID único;
 * Título;
 * Artista;
-* Duração (em segundos);
+* Duração;
 * Gênero musical.
-
----
 
 ### Funcionalidades implementadas
 
 * Cadastrar música;
 * Buscar música por ID;
 * Editar informações da música;
-* Excluir música da playlist;
-* Listar todas as músicas cadastradas;
+* Excluir música;
+* Listar músicas cadastradas;
 * Salvar dados em arquivo CSV;
 * Carregar dados de arquivo CSV;
-* Controle de limite máximo de registros;
-* Validação de chave única (ID);
-
----
+* Validação de ID único.
 
 ### Estruturas e conceitos utilizados
 
 * Structs;
 * Ponteiros;
 * Manipulação de arquivos CSV;
-* Lista Duplamente Encadeada;
+* Lista de registros;
 * Busca sequencial;
-* Tratamento de erros e validação de entradas.
+* Validação de entradas.
 
 ---
-
-## Compilação
-
-Para compilar o programa utilizando o GCC:
-
-```bash
-gcc playlist_musicas.c -o playlist
-```
----
-
-## Execução
-
-Após a compilação, execute o programa no Linux com:
-
-```bash
-./playlist
-```
-
-No Windows:
-
-```bash
-playlist.exe
-```
----
-
-## Funcionamento
-
-Ao iniciar, o sistema tenta carregar automaticamente os dados armazenados no arquivo `playlist.csv`.
-
-O usuário interage com um menu contendo as opções de:
-
-1. Cadastrar música;
-2. Listar playlist;
-3. Buscar música por ID;
-4. Editar música;
-5. Excluir música;
-6. Salvar dados em CSV;
-7. Encerrar programa.
-
-Ao finalizar a execução, os dados são salvos automaticamente e toda a memória alocada dinamicamente é liberada.
-
----
-
-## Arquivos CSV
-
-O programa utiliza arquivos CSV para armazenamento permanente dos dados da playlist.
-
-### Exemplo de arquivo utilizado no Trabalho A
-
-```csv
-id;titulo;artista;duracao;genero
-1;Believer;Imagine Dragons;204;Rock
-2;Shape of You;Ed Sheeran;233;Pop
-3;Blinding Lights;The Weeknd;200;Pop
-```
----
-
-## Observações
-
-* Os dados são carregados automaticamente ao iniciar o programa.
-* Os dados podem ser salvos manualmente através da opção **"Salvar Dados (CSV)"** do menu.
-* Ao encerrar o programa, os dados são salvos automaticamente no arquivo `playlist.csv`.
-* Toda a memória alocada dinamicamente é liberada antes do encerramento do sistema.
-* O programa utiliza uma **Lista Duplamente Encadeada Dinâmica** para armazenamento dos registros em memória.
-* Cada música possui um **ID único**, impedindo cadastros duplicados.
-  
-### O sistema possui tratamento para:
-
-* Estrutura vazia;
-* Estrutura cheia (limite de 100 músicas);
-* IDs duplicados;
-* Entradas inválidas do usuário;
-* Falhas de alocação de memória.
-* As estruturas de dados foram implementadas manualmente, sem utilização de bibliotecas prontas de listas.
-* Os dados permanecem disponíveis entre diferentes execuções do programa através do arquivo CSV.
----
-
-## Dificuldades Encontradas
-
-Durante o desenvolvimento, os principais desafios foram:
-
-* Implementação correta da lista duplamente encadeada;
-* Controle dos ponteiros de início e fim da lista;
-* Tratamento das operações de remoção em diferentes posições da lista;
-* Manipulação e persistência dos dados em arquivos CSV;
-* Validação de entradas para evitar inconsistências nos registros;
----
-
->>>>>>> 9f27717dcb8179efa5412a81d09a3440f85d842b
 
 ## Trabalho B – Chamadas de Emergência
 
@@ -204,7 +99,7 @@ Cada chamada possui:
 * Tipo da ocorrência;
 * Horário da chamada.
 
-Funcionalidades implementadas:
+### Funcionalidades implementadas
 
 * Registrar chamada;
 * Atender chamada;
@@ -216,7 +111,7 @@ Funcionalidades implementadas:
 * Salvamento dos dados em arquivo CSV;
 * Carregamento automático dos dados salvos em CSV.
 
-Estruturas e conceitos utilizados:
+### Estruturas e conceitos utilizados
 
 * Structs;
 * Vetor de registros;
@@ -226,59 +121,47 @@ Estruturas e conceitos utilizados:
 * Manipulação de strings;
 * Validação de entrada de dados.
 
-<<<<<<< HEAD
-## Trabalho C
-
-Programa desenvolvido para atender aos requisitos do Tema C utilizando estruturas de dados implementadas em linguagem C.
-
 ---
 
-# Estrutura do Repositório
+## Trabalho C
 
-```text
-Trabalho_Final_Estruturas_Dados/
-
-README.md
-
-Trabalho_A/
-    trabalho_a.c
-
-Trabalho_B/
-    ChamadasDeEmergencia.c
-
-Trabalho_C/
-    trabalho_c.c
-
-relatorio.md
-```
+Tema ainda não definido.
 
 ---
 
 # Como Compilar
-=======
----
 
-## Como Compilar
->>>>>>> 9f27717dcb8179efa5412a81d09a3440f85d842b
+## Trabalho A
 
-Exemplo utilizando GCC:
+```bash
+gcc playlist_musicas.c -o playlist
+```
+
+## Trabalho B
 
 ```bash
 gcc ChamadasDeEmergencia.c -o ChamadasDeEmergencia
 ```
 
-Ou utilizando a IDE de preferência:
-
-* Code::Blocks
-* Dev-C++
-* Visual Studio Code
-* Visual Studio
-
 ---
 
 # Como Executar
 
-Após compilar:
+## Trabalho A
+
+Windows:
+
+```bash
+playlist.exe
+```
+
+Linux:
+
+```bash
+./playlist
+```
+
+## Trabalho B
 
 Windows:
 
@@ -294,27 +177,37 @@ Linux:
 
 ---
 
-# Funcionamento do Trabalho B
+# Arquivos CSV
 
-A pilha segue a lógica LIFO (Last In, First Out).
+Os programas utilizam arquivos CSV para armazenamento permanente dos dados.
 
-Isso significa que a última chamada registrada será a primeira chamada atendida.
+### Trabalho A
 
-Exemplo:
+```text
+playlist.csv
+```
 
-1. Registrar protocolo 1001
-2. Registrar protocolo 1002
-3. Registrar protocolo 1003
+### Trabalho B
 
-Ao atender:
-
-1. Protocolo 1003
-2. Protocolo 1002
-3. Protocolo 1001
+```text
+chamadas.csv
+```
 
 ---
 
 # Testes Realizados
+
+## Trabalho A
+
+* Cadastro de músicas;
+* Busca por ID existente;
+* Busca por ID inexistente;
+* Edição de registros;
+* Exclusão de registros;
+* Salvamento em CSV;
+* Carregamento de CSV.
+
+## Trabalho B
 
 * Inserção em pilha vazia;
 * Inserção de vários registros;
@@ -324,7 +217,7 @@ Ao atender:
 * Validação do horário;
 * Validação do tipo da ocorrência;
 * Controle de pilha cheia;
-* Listagem de todos os registros;
+* Listagem dos registros;
 * Salvamento em arquivo CSV;
 * Carregamento de dados a partir do CSV.
 
@@ -332,29 +225,19 @@ Ao atender:
 
 # Observações
 
-* Os registros podem ser armazenados no arquivo chamadas.csv.
-* Os dados são carregados automaticamente ao iniciar o programa.
-* O topo da pilha é controlado por uma variável inteira.
-* O arquivo CSV permite manter os registros entre diferentes execuções do sistema.
-* O programa foi desenvolvido em linguagem C.
+* Os dados são carregados automaticamente ao iniciar os programas.
+* Os registros podem ser salvos em arquivos CSV.
+* Os dados permanecem disponíveis entre diferentes execuções.
+* Os programas foram desenvolvidos em linguagem C.
+* As estruturas de dados foram implementadas manualmente conforme os requisitos da disciplina.
 
 ---
 
 # Dificuldades Encontradas
 
-<<<<<<< HEAD
-* Implementação da lógica de pilha.
-* Validação das entradas do usuário.
-* Manipulação de strings utilizando funções da biblioteca padrão da linguagem C.
-* Organização das funções para manter o código legível e modularizado.
-=======
-* Implementação das estruturas dinâmicas utilizando ponteiros;
+* Implementação das estruturas de dados;
 * Manipulação de arquivos CSV;
 * Validação das entradas do usuário;
-* Integração entre persistência em arquivo e estruturas dinâmicas.
----
-
-### Trabalho C
-
-Programa desenvolvido para atender aos requisitos do Tema C da disciplina, utilizando estruturas de dados dinâmicas implementadas manualmente em linguagem C.
->>>>>>> 9f27717dcb8179efa5412a81d09a3440f85d842b
+* Manipulação de strings;
+* Organização e modularização do código;
+* Integração entre memória e persistência em arquivos.
