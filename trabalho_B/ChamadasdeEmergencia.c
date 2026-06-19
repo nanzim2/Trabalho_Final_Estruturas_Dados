@@ -173,10 +173,73 @@ void atenderChamada(struct registro r[], int *topo){
     return;
 }
 
+void salvarCSV(){
+    FILE *arq = fopen("chamadas.csv", "w");
+
+    if(arq == NULL){
+        printf("Erro ao criar arquivo!\n");
+        return;
+    }
+
+    fprintf(arq, "protocolo;local;tipo;horario\n");
+
+    for(int i = 0; i <= topo; i++){
+        fprintf(arq, "%d;%s;%s;%s\n",
+                rg[i].protocolo,
+                rg[i].local,
+                rg[i].tipo,
+                rg[i].horario);
+    }
+
+    fclose(arq);
+
+    printf("Arquivo salvo com sucesso!\n");
+}
+
+void carregarCSV(){
+
+    FILE *arq = fopen("chamadas.csv", "r");
+
+    if(arq == NULL){
+        return;
+    }
+
+    char linha[200];
+
+    fgets(linha, sizeof(linha), arq);
+
+    topo = -1;
+
+    while(fgets(linha, sizeof(linha), arq)){
+
+        struct registro novo;
+
+        if(sscanf(linha,
+                  "%d;%49[^;];%29[^;];%19[^\n]",
+                  &novo.protocolo,
+                  novo.local,
+                  novo.tipo,
+                  novo.horario) == 4){
+
+            topo++;
+            rg[topo] = novo;
+
+            if(novo.protocolo > protocoloAtual){
+                protocoloAtual = novo.protocolo;
+            }
+        }
+    }
+
+    fclose(arq);
+}
+
 int main(){
     int op;
     system("cls");
     setlocale(LC_ALL, "portuguese");
+
+    inicializarPilha();
+    carregarCSV();
 
     do
     {
@@ -185,7 +248,8 @@ int main(){
         printf("2. Atender chamada\n");
         printf("3. Consultar última chamada\n");
         printf("4. Mostrar todas as chamadas\n");
-        printf("5. Sair\n");
+        printf("5. Salvar CSV\n");
+        printf("6. Sair\n");
         printf("Opção: ");
         scanf("%d", &op);
         getchar(); //limpar buffet do teclado
@@ -204,6 +268,11 @@ int main(){
             imprimir(rg, topo, -1);
             break;
         case 5:
+            salvarCSV();
+            Sleep(1500);
+            break;
+        case 6:
+            salvarCSV();
             printf("Saindo...\n");
             Sleep(1000);
             break;
@@ -212,6 +281,6 @@ int main(){
             Sleep(1500);
             break;
         }
-    } while (op != 5);
+    } while (op != 6);
     return 0;
 }
