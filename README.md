@@ -17,7 +17,7 @@ Turma: C
 
 ## Trabalho A
 
-Tema: [Informar Tema Escolhido]
+Tema: Playlist de música
 
 ## Trabalho B
 
