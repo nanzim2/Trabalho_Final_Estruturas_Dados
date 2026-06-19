@@ -243,14 +243,15 @@ int main(){
 
     do
     {
-        printf("=== Chamadas de Emergência ===\n");
+        system("cls");
+        printf("=== Chamadas de Emergencia ===\n");
         printf("1. Registrar chamada\n");
         printf("2. Atender chamada\n");
-        printf("3. Consultar última chamada\n");
+        printf("3. Consultar ultima chamada\n");
         printf("4. Mostrar todas as chamadas\n");
         printf("5. Salvar CSV\n");
         printf("6. Sair\n");
-        printf("Opção: ");
+        printf("Opcao: ");
         scanf("%d", &op);
         getchar(); //limpar buffet do teclado
 

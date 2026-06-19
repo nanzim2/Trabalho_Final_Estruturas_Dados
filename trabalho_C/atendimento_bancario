@@ -1,0 +1,1006 @@
+/* ==========================================================
+   SISTEMA DE ATENDIMENTO BANCÁRIO
+   TRABALHO C - FILA SIMPLES E FILA CIRCULAR
+
+   Funcionalidades:
+   - Gerar senha
+   - Chamar próximo
+   - Consultar próximo
+   - Listar filas
+   - Buscar senha
+   - Cancelar senha
+   - Salvar dados em CSV
+   - Carregar dados do CSV
+   - Exibir estatísticas
+   - Exibir relatório de atendimentos
+
+   Estruturas utilizadas:
+   - Struct
+   - Ponteiros
+   - Nós encadeados
+   - Fila simples
+   - Fila circular
+   - Alocação dinâmica com malloc()
+   - Liberação de memória com free()
+   - Arquivos CSV
+========================================================== */
+
+// Bibliotecas 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+
+// Constantes e arquivos
+#define ARQ_NORMAL "fila_normal.csv"
+#define ARQ_PREF "fila_preferencial.csv"
+#define ARQ_RELATORIO "relatorio_atendimentos.csv"
+
+// Cores para personalização do terminal
+#define RESET "\033[0m"
+#define VERDE "\033[32m"
+#define VERMELHO "\033[31m"
+#define AMARELO "\033[33m"
+#define AZUL "\033[34m"
+#define CIANO "\033[36m"
+#define NEGRITO "\033[1m"
+
+// Registro da senha
+typedef struct {
+    int senha;
+    char tipo;
+    char horario[20];
+} Registro;
+
+// Nó da lista encadeada
+typedef struct No {
+    Registro dado;
+    struct No *prox;
+} No;
+
+// Estrutura da fila
+typedef struct {
+    No *inicio;
+    No *fim;
+    int quantidade;
+} Fila;
+
+// Controle geral do sistema
+typedef struct {
+    int totalAtendidos;
+    int atendidosNormais;
+    int atendidosPreferenciais;
+    int limiteNormais;
+    int contadorNormais;
+    int proximaSenha;
+} Sistema;
+
+// Protótipos das funções
+void limparBuffer();
+void pausar();
+void limparTela();
+void titulo(char texto[]);
+void mensagemSucesso(char texto[]);
+void mensagemErro(char texto[]);
+void mensagemAviso(char texto[]);
+void mostrarRegistro(Registro r);
+
+void inicializarFila(Fila *f);
+void inicializarSistema(Sistema *s);
+
+int filaVazia(Fila *f);
+void enfileirar(Fila *f, Registro r);
+int desenfileirar(Fila *f, Registro *r);
+int consultarProximo(Fila *f, Registro *r);
+void listarFila(Fila *f, char nomeFila[]);
+
+void enfileirarCircular(Fila *f, Registro r);
+int desenfileirarCircular(Fila *f, Registro *r);
+int consultarProximoCircular(Fila *f, Registro *r);
+void listarFilaCircular(Fila *f, char nomeFila[]);
+
+No *buscarNoFilaNormal(Fila *f, int senha);
+No *buscarNoFilaCircular(Fila *f, int senha);
+
+Registro criarRegistro(Sistema *s, char tipo);
+void gerarSenha(Fila *normal, Fila *pref, Sistema *s);
+void chamarProximo(Fila *normal, Fila *pref, Sistema *s);
+void consultarProximos(Fila *normal, Fila *pref);
+void listarTodas(Fila *normal, Fila *pref);
+void buscarSenha(Fila *normal, Fila *pref);
+void cancelarSenha(Fila *normal, Fila *pref);
+void configurarPrioridade(Sistema *s);
+void mostrarEstatisticas(Fila *normal, Fila *pref, Sistema *s);
+
+void salvarTudoCSV(Fila *normal, Fila *pref);
+void carregarTudoCSV(Fila *normal, Fila *pref, Sistema *s);
+void salvarRelatorioAtendimento(Registro r);
+void mostrarRelatorio();
+
+void liberarFila(Fila *f);
+void liberarFilaCircular(Fila *f);
+
+// Funções auxiliares
+void limparBuffer() {
+    int c;
+    while ((c = getchar()) != '\n' && c != EOF);
+}
+
+void pausar() {
+    printf("\n%sPressione ENTER para continuar...%s", AMARELO, RESET);
+    getchar();
+}
+
+void limparTela() {
+#ifdef _WIN32
+    system("cls");
+#else
+    system("clear");
+#endif
+}
+
+void titulo(char texto[]) {
+    printf("\n%s%s========================================%s\n", CIANO, NEGRITO, RESET);
+    printf("%s%s%s\n", NEGRITO, texto, RESET);
+    printf("%s%s========================================%s\n", CIANO, NEGRITO, RESET);
+}
+
+void mensagemSucesso(char texto[]) {
+    printf("%s[SUCESSO] %s%s\n", VERDE, texto, RESET);
+}
+
+void mensagemErro(char texto[]) {
+    printf("%s[ERRO] %s%s\n", VERMELHO, texto, RESET);
+}
+
+void mensagemAviso(char texto[]) {
+    printf("%s[AVISO] %s%s\n", AMARELO, texto, RESET);
+}
+
+void mostrarRegistro(Registro r) {
+    printf("Senha: %d | Tipo: %c | Horario: %s\n",
+           r.senha, r.tipo, r.horario);
+}
+
+// Inicialização
+void inicializarFila(Fila *f) {
+    f->inicio = NULL;
+    f->fim = NULL;
+    f->quantidade = 0;
+}
+
+void inicializarSistema(Sistema *s) {
+    s->totalAtendidos = 0;
+    s->atendidosNormais = 0;
+    s->atendidosPreferenciais = 0;
+    s->limiteNormais = 2;
+    s->contadorNormais = 0;
+    s->proximaSenha = 1;
+}
+
+// Fila normal encadeada
+int filaVazia(Fila *f) {
+    return f->inicio == NULL;
+}
+
+void enfileirar(Fila *f, Registro r) {
+    No *novo = (No *) malloc(sizeof(No));
+
+    if (novo == NULL) {
+        mensagemErro("Falha ao alocar memoria.");
+        return;
+    }
+
+    novo->dado = r;
+    novo->prox = NULL;
+
+    if (filaVazia(f)) {
+        f->inicio = novo;
+        f->fim = novo;
+    } else {
+        f->fim->prox = novo;
+        f->fim = novo;
+    }
+
+    f->quantidade++;
+}
+
+int desenfileirar(Fila *f, Registro *r) {
+    if (filaVazia(f)) {
+        return 0;
+    }
+
+    No *remover = f->inicio;
+    *r = remover->dado;
+
+    f->inicio = f->inicio->prox;
+
+    if (f->inicio == NULL) {
+        f->fim = NULL;
+    }
+
+    free(remover);
+    f->quantidade--;
+
+    return 1;
+}
+
+int consultarProximo(Fila *f, Registro *r) {
+    if (filaVazia(f)) {
+        return 0;
+    }
+
+    *r = f->inicio->dado;
+    return 1;
+}
+
+void listarFila(Fila *f, char nomeFila[]) {
+    titulo(nomeFila);
+
+    if (filaVazia(f)) {
+        mensagemAviso("Fila vazia.");
+        return;
+    }
+
+    No *atual = f->inicio;
+
+    while (atual != NULL) {
+        mostrarRegistro(atual->dado);
+        atual = atual->prox;
+    }
+}
+
+// Fila circular encadeada
+void enfileirarCircular(Fila *f, Registro r) {
+    No *novo = (No *) malloc(sizeof(No));
+
+    if (novo == NULL) {
+        mensagemErro("Falha ao alocar memoria.");
+        return;
+    }
+
+    novo->dado = r;
+
+    if (filaVazia(f)) {
+        f->inicio = novo;
+        f->fim = novo;
+        novo->prox = novo;
+    } else {
+        novo->prox = f->inicio;
+        f->fim->prox = novo;
+        f->fim = novo;
+    }
+
+    f->quantidade++;
+}
+
+int desenfileirarCircular(Fila *f, Registro *r) {
+    if (filaVazia(f)) {
+        return 0;
+    }
+
+    No *remover = f->inicio;
+    *r = remover->dado;
+
+    if (f->inicio == f->fim) {
+        f->inicio = NULL;
+        f->fim = NULL;
+    } else {
+        f->inicio = f->inicio->prox;
+        f->fim->prox = f->inicio;
+    }
+
+    free(remover);
+    f->quantidade--;
+
+    return 1;
+}
+
+int consultarProximoCircular(Fila *f, Registro *r) {
+    if (filaVazia(f)) {
+        return 0;
+    }
+
+    *r = f->inicio->dado;
+    return 1;
+}
+
+void listarFilaCircular(Fila *f, char nomeFila[]) {
+    titulo(nomeFila);
+
+    if (filaVazia(f)) {
+        mensagemAviso("Fila vazia.");
+        return;
+    }
+
+    No *atual = f->inicio;
+
+    do {
+        mostrarRegistro(atual->dado);
+        atual = atual->prox;
+    } while (atual != f->inicio);
+}
+
+// Busca
+No *buscarNoFilaNormal(Fila *f, int senha) {
+    No *atual = f->inicio;
+
+    while (atual != NULL) {
+        if (atual->dado.senha == senha) {
+            return atual;
+        }
+
+        atual = atual->prox;
+    }
+
+    return NULL;
+}
+
+No *buscarNoFilaCircular(Fila *f, int senha) {
+    if (filaVazia(f)) {
+        return NULL;
+    }
+
+    No *atual = f->inicio;
+
+    do {
+        if (atual->dado.senha == senha) {
+            return atual;
+        }
+
+        atual = atual->prox;
+
+    } while (atual != f->inicio);
+
+    return NULL;
+}
+
+void buscarSenha(Fila *normal, Fila *pref) {
+    int senha;
+
+    titulo("BUSCAR SENHA");
+
+    printf("Digite a senha: ");
+    scanf("%d", &senha);
+    limparBuffer();
+
+    No *n = buscarNoFilaNormal(normal, senha);
+    No *p = buscarNoFilaCircular(pref, senha);
+
+    if (n != NULL) {
+        mensagemSucesso("Senha encontrada na fila normal.");
+        mostrarRegistro(n->dado);
+    }
+    else if (p != NULL) {
+        mensagemSucesso("Senha encontrada na fila preferencial.");
+        mostrarRegistro(p->dado);
+    }
+    else {
+        mensagemAviso("Senha nao encontrada.");
+    }
+}
+
+// Cancelamento de senhas
+int cancelarNaFilaNormal(Fila *f, int senha) {
+    No *atual = f->inicio;
+    No *anterior = NULL;
+
+    while (atual != NULL) {
+        if (atual->dado.senha == senha) {
+
+            if (anterior == NULL) {
+                f->inicio = atual->prox;
+            } else {
+                anterior->prox = atual->prox;
+            }
+
+            if (atual == f->fim) {
+                f->fim = anterior;
+            }
+
+            free(atual);
+            f->quantidade--;
+
+            if (f->quantidade == 0) {
+                f->inicio = NULL;
+                f->fim = NULL;
+            }
+
+            return 1;
+        }
+
+        anterior = atual;
+        atual = atual->prox;
+    }
+
+    return 0;
+}
+
+int cancelarNaFilaCircular(Fila *f, int senha) {
+    if (filaVazia(f)) {
+        return 0;
+    }
+
+    No *atual = f->inicio;
+    No *anterior = f->fim;
+
+    do {
+        if (atual->dado.senha == senha) {
+
+            if (atual == f->inicio && atual == f->fim) {
+                f->inicio = NULL;
+                f->fim = NULL;
+            } else {
+                anterior->prox = atual->prox;
+
+                if (atual == f->inicio) {
+                    f->inicio = atual->prox;
+                }
+
+                if (atual == f->fim) {
+                    f->fim = anterior;
+                }
+
+                f->fim->prox = f->inicio;
+            }
+
+            free(atual);
+            f->quantidade--;
+            return 1;
+        }
+
+        anterior = atual;
+        atual = atual->prox;
+
+    } while (atual != f->inicio);
+
+    return 0;
+}
+
+void cancelarSenha(Fila *normal, Fila *pref) {
+    int senha;
+    char confirma;
+
+    titulo("CANCELAR SENHA");
+
+    printf("Digite a senha: ");
+    scanf("%d", &senha);
+    limparBuffer();
+
+    No *n = buscarNoFilaNormal(normal, senha);
+    No *p = buscarNoFilaCircular(pref, senha);
+
+    if (n == NULL && p == NULL) {
+        mensagemAviso("Senha nao encontrada.");
+        return;
+    }
+
+    printf("\nSenha localizada:\n");
+
+    if (n != NULL) {
+        mostrarRegistro(n->dado);
+    } else {
+        mostrarRegistro(p->dado);
+    }
+
+    printf("\nConfirma cancelamento? (S/N): ");
+    scanf(" %c", &confirma);
+    limparBuffer();
+
+    confirma = toupper(confirma);
+
+    if (confirma != 'S') {
+        mensagemAviso("Cancelamento abortado.");
+        return;
+    }
+
+    if (n != NULL) {
+        cancelarNaFilaNormal(normal, senha);
+    } else {
+        cancelarNaFilaCircular(pref, senha);
+    }
+
+    mensagemSucesso("Senha cancelada.");
+}
+
+// Geração e atendimento de senhas
+Registro criarRegistro(Sistema *s, char tipo) {
+    Registro r;
+
+    r.senha = s->proximaSenha++;
+    r.tipo = tipo;
+
+    printf("Digite o horario de chegada (ex: 09:05): ");
+    fgets(r.horario, 20, stdin);
+    r.horario[strcspn(r.horario, "\n")] = '\0';
+
+    if (strlen(r.horario) == 0) {
+        strcpy(r.horario, "00:00");
+    }
+
+    return r;
+}
+
+void gerarSenha(Fila *normal, Fila *pref, Sistema *s) {
+    char tipo;
+
+    titulo("GERAR SENHA");
+
+    do {
+        printf("N - Normal\n");
+        printf("P - Preferencial\n");
+        printf("Opcao: ");
+        scanf(" %c", &tipo);
+        limparBuffer();
+
+        tipo = toupper(tipo);
+
+        if (tipo != 'N' && tipo != 'P') {
+            mensagemErro("Digite apenas N ou P.");
+        }
+
+    } while (tipo != 'N' && tipo != 'P');
+
+    Registro r = criarRegistro(s, tipo);
+
+    if (tipo == 'N') {
+        enfileirar(normal, r);
+        mensagemSucesso("Senha adicionada na fila normal.");
+    } else {
+        enfileirarCircular(pref, r);
+        mensagemSucesso("Senha adicionada na fila preferencial.");
+    }
+
+    mostrarRegistro(r);
+}
+
+void salvarRelatorioAtendimento(Registro r) {
+    FILE *arquivo = fopen(ARQ_RELATORIO, "a");
+
+    if (arquivo == NULL) {
+        mensagemErro("Erro ao abrir relatorio.");
+        return;
+    }
+
+    fprintf(arquivo, "%d;%c;%s\n", r.senha, r.tipo, r.horario);
+    fclose(arquivo);
+}
+
+void chamarProximo(Fila *normal, Fila *pref, Sistema *s) {
+    Registro atendido;
+    int chamou = 0;
+
+    titulo("CHAMAR PROXIMO");
+
+    if (filaVazia(normal) && filaVazia(pref)) {
+        mensagemAviso("Nao ha senhas aguardando.");
+        return;
+    }
+
+    if (!filaVazia(normal) &&
+        (filaVazia(pref) || s->contadorNormais < s->limiteNormais)) {
+
+        chamou = desenfileirar(normal, &atendido);
+        s->contadorNormais++;
+
+    } else {
+        chamou = desenfileirarCircular(pref, &atendido);
+        s->contadorNormais = 0;
+    }
+
+    if (chamou) {
+        printf("\n%s>>> SENHA CHAMADA <<<%s\n", VERDE, RESET);
+        mostrarRegistro(atendido);
+
+        s->totalAtendidos++;
+
+        if (atendido.tipo == 'N') {
+            s->atendidosNormais++;
+        } else {
+            s->atendidosPreferenciais++;
+        }
+
+        salvarRelatorioAtendimento(atendido);
+    }
+}
+
+void consultarProximos(Fila *normal, Fila *pref) {
+    Registro r;
+
+    titulo("CONSULTAR PROXIMOS");
+
+    printf("\nProximo NORMAL:\n");
+
+    if (consultarProximo(normal, &r)) {
+        mostrarRegistro(r);
+    } else {
+        mensagemAviso("Fila normal vazia.");
+    }
+
+    printf("\nProximo PREFERENCIAL:\n");
+
+    if (consultarProximoCircular(pref, &r)) {
+        mostrarRegistro(r);
+    } else {
+        mensagemAviso("Fila preferencial vazia.");
+    }
+}
+
+void listarTodas(Fila *normal, Fila *pref) {
+    listarFila(normal, "FILA NORMAL");
+    listarFilaCircular(pref, "FILA PREFERENCIAL");
+}
+
+// Configuração de prioridade
+void configurarPrioridade(Sistema *s) {
+    int novo;
+
+    titulo("CONFIGURAR PRIORIDADE");
+
+    printf("Regra atual: %d normal(is) para 1 preferencial.\n",
+           s->limiteNormais);
+
+    printf("Nova quantidade de normais antes da preferencial: ");
+
+    if (scanf("%d", &novo) != 1) {
+        limparBuffer();
+        mensagemErro("Entrada invalida.");
+        return;
+    }
+
+    limparBuffer();
+
+    if (novo <= 0) {
+        mensagemErro("Valor invalido.");
+        return;
+    }
+
+    s->limiteNormais = novo;
+    s->contadorNormais = 0;
+
+    mensagemSucesso("Prioridade atualizada.");
+}
+
+// Estatísticas
+void mostrarEstatisticas(Fila *normal, Fila *pref, Sistema *s) {
+    titulo("ESTATISTICAS");
+
+    printf("Total atendido: %d\n", s->totalAtendidos);
+    printf("Normais atendidos: %d\n", s->atendidosNormais);
+    printf("Preferenciais atendidos: %d\n", s->atendidosPreferenciais);
+    printf("Aguardando normal: %d\n", normal->quantidade);
+    printf("Aguardando preferencial: %d\n", pref->quantidade);
+    printf("Regra: %d normal(is) para 1 preferencial.\n",
+           s->limiteNormais);
+}
+
+// CSV
+void salvarFilaNormalCSV(Fila *normal) {
+    FILE *arquivo = fopen(ARQ_NORMAL, "w");
+
+    if (arquivo == NULL) {
+        mensagemErro("Erro ao salvar fila normal.");
+        return;
+    }
+
+    fprintf(arquivo, "senha;tipo;horario\n");
+
+    No *atual = normal->inicio;
+
+    while (atual != NULL) {
+        fprintf(arquivo, "%d;%c;%s\n",
+                atual->dado.senha,
+                atual->dado.tipo,
+                atual->dado.horario);
+
+        atual = atual->prox;
+    }
+
+    fclose(arquivo);
+}
+
+void salvarFilaPreferencialCSV(Fila *pref) {
+    FILE *arquivo = fopen(ARQ_PREF, "w");
+
+    if (arquivo == NULL) {
+        mensagemErro("Erro ao salvar fila preferencial.");
+        return;
+    }
+
+    fprintf(arquivo, "senha;tipo;horario\n");
+
+    if (!filaVazia(pref)) {
+        No *atual = pref->inicio;
+
+        do {
+            fprintf(arquivo, "%d;%c;%s\n",
+                    atual->dado.senha,
+                    atual->dado.tipo,
+                    atual->dado.horario);
+
+            atual = atual->prox;
+
+        } while (atual != pref->inicio);
+    }
+
+    fclose(arquivo);
+}
+
+void salvarTudoCSV(Fila *normal, Fila *pref) {
+    salvarFilaNormalCSV(normal);
+    salvarFilaPreferencialCSV(pref);
+
+    mensagemSucesso("Dados salvos em CSV.");
+}
+
+void carregarFilaNormalCSV(Fila *normal, Sistema *s) {
+    FILE *arquivo = fopen(ARQ_NORMAL, "r");
+    char linha[100];
+
+    if (arquivo == NULL) {
+        mensagemAviso("Arquivo normal nao encontrado.");
+        return;
+    }
+
+    liberarFila(normal);
+    inicializarFila(normal);
+
+    fgets(linha, sizeof(linha), arquivo);
+
+    while (fgets(linha, sizeof(linha), arquivo) != NULL) {
+        Registro r;
+        char *campo;
+
+        campo = strtok(linha, ";");
+
+        if (campo == NULL) {
+            continue;
+        }
+
+        r.senha = atoi(campo);
+
+        campo = strtok(NULL, ";");
+
+        if (campo == NULL) {
+            continue;
+        }
+
+        r.tipo = campo[0];
+
+        campo = strtok(NULL, ";\n");
+
+        if (campo == NULL) {
+            continue;
+        }
+
+        strcpy(r.horario, campo);
+
+        enfileirar(normal, r);
+
+        if (r.senha >= s->proximaSenha) {
+            s->proximaSenha = r.senha + 1;
+        }
+    }
+
+    fclose(arquivo);
+}
+
+void carregarFilaPreferencialCSV(Fila *pref, Sistema *s) {
+    FILE *arquivo = fopen(ARQ_PREF, "r");
+    char linha[100];
+
+    if (arquivo == NULL) {
+        mensagemAviso("Arquivo preferencial nao encontrado.");
+        return;
+    }
+
+    liberarFilaCircular(pref);
+    inicializarFila(pref);
+
+    fgets(linha, sizeof(linha), arquivo);
+
+    while (fgets(linha, sizeof(linha), arquivo) != NULL) {
+        Registro r;
+        char *campo;
+
+        campo = strtok(linha, ";");
+
+        if (campo == NULL) {
+            continue;
+        }
+
+        r.senha = atoi(campo);
+
+        campo = strtok(NULL, ";");
+
+        if (campo == NULL) {
+            continue;
+        }
+
+        r.tipo = campo[0];
+
+        campo = strtok(NULL, ";\n");
+
+        if (campo == NULL) {
+            continue;
+        }
+
+        strcpy(r.horario, campo);
+
+        enfileirarCircular(pref, r);
+
+        if (r.senha >= s->proximaSenha) {
+            s->proximaSenha = r.senha + 1;
+        }
+    }
+
+    fclose(arquivo);
+}
+
+void carregarTudoCSV(Fila *normal, Fila *pref, Sistema *s) {
+    carregarFilaNormalCSV(normal, s);
+    carregarFilaPreferencialCSV(pref, s);
+
+    mensagemSucesso("Carregamento finalizado.");
+}
+
+//Relatórios
+void mostrarRelatorio() {
+    FILE *arquivo = fopen(ARQ_RELATORIO, "r");
+    char linha[100];
+
+    titulo("RELATORIO DE ATENDIMENTOS");
+
+    if (arquivo == NULL) {
+        mensagemAviso("Nenhum relatorio encontrado.");
+        return;
+    }
+
+    while (fgets(linha, sizeof(linha), arquivo) != NULL) {
+        printf("%s", linha);
+    }
+
+    fclose(arquivo);
+}
+
+// Liberação de memória
+void liberarFila(Fila *f) {
+    No *atual = f->inicio;
+
+    while (atual != NULL) {
+        No *remover = atual;
+        atual = atual->prox;
+        free(remover);
+    }
+
+    f->inicio = NULL;
+    f->fim = NULL;
+    f->quantidade = 0;
+}
+
+void liberarFilaCircular(Fila *f) {
+    if (filaVazia(f)) {
+        return;
+    }
+
+    No *atual = f->inicio;
+    No *primeiro = f->inicio;
+
+    do {
+        No *remover = atual;
+        atual = atual->prox;
+        free(remover);
+    } while (atual != primeiro);
+
+    f->inicio = NULL;
+    f->fim = NULL;
+    f->quantidade = 0;
+}
+
+// Interface do usuário
+void menuPrincipal() {
+    printf("\n%s%s", CIANO, NEGRITO);
+    printf("========================================\n");
+    printf("     SISTEMA DE ATENDIMENTO BANCARIO    \n");
+    printf("========================================\n");
+    printf("%s", RESET);
+
+    printf("%s1%s  - Gerar senha\n", VERDE, RESET);
+    printf("%s2%s  - Chamar proximo\n", VERDE, RESET);
+    printf("%s3%s  - Consultar proximos\n", VERDE, RESET);
+    printf("%s4%s  - Listar filas\n", VERDE, RESET);
+    printf("%s5%s  - Buscar senha\n", VERDE, RESET);
+    printf("%s6%s  - Cancelar senha\n", VERDE, RESET);
+    printf("%s7%s  - Salvar CSV\n", VERDE, RESET);
+    printf("%s8%s  - Carregar CSV\n", VERDE, RESET);
+    printf("%s9%s  - Configurar prioridade\n", VERDE, RESET);
+    printf("%s10%s - Estatisticas\n", VERDE, RESET);
+    printf("%s11%s - Relatorio\n", VERDE, RESET);
+    printf("%s0%s  - Sair\n", VERMELHO, RESET);
+
+    printf("\nOpcao: ");
+}
+
+// Função principal
+int main() {
+    Fila filaNormal;
+    Fila filaPreferencial;
+    Sistema sistema;
+    int opcao;
+
+    inicializarFila(&filaNormal);
+    inicializarFila(&filaPreferencial);
+    inicializarSistema(&sistema);
+
+    do {
+        menuPrincipal();
+
+        if (scanf("%d", &opcao) != 1) {
+            limparBuffer();
+            mensagemErro("Digite apenas numeros.");
+            continue;
+        }
+
+        limparBuffer();
+
+        switch (opcao) {
+            case 1:
+                gerarSenha(&filaNormal, &filaPreferencial, &sistema);
+                break;
+
+            case 2:
+                chamarProximo(&filaNormal, &filaPreferencial, &sistema);
+                break;
+
+            case 3:
+                consultarProximos(&filaNormal, &filaPreferencial);
+                break;
+
+            case 4:
+                listarTodas(&filaNormal, &filaPreferencial);
+                break;
+
+            case 5:
+                buscarSenha(&filaNormal, &filaPreferencial);
+                break;
+
+            case 6:
+                cancelarSenha(&filaNormal, &filaPreferencial);
+                break;
+
+            case 7:
+                salvarTudoCSV(&filaNormal, &filaPreferencial);
+                break;
+
+            case 8:
+                carregarTudoCSV(&filaNormal, &filaPreferencial, &sistema);
+                break;
+
+            case 9:
+                configurarPrioridade(&sistema);
+                break;
+
+            case 10:
+                mostrarEstatisticas(&filaNormal, &filaPreferencial, &sistema);
+                break;
+
+            case 11:
+                mostrarRelatorio();
+                break;
+
+            case 0:
+                titulo("ENCERRANDO");
+                salvarTudoCSV(&filaNormal, &filaPreferencial);
+                liberarFila(&filaNormal);
+                liberarFilaCircular(&filaPreferencial);
+                mensagemSucesso("Memoria liberada corretamente.");
+                break;
+
+            default:
+                mensagemErro("Opcao invalida.");
+        }
+
+    } while (opcao != 0);
+
+    return 0;
+}
