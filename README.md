@@ -81,15 +81,11 @@ Cada música possui:
 ### Estruturas e conceitos utilizados
 
 - Structs;
-- Lista duplamente encandeada;
 - Ponteiros;
-- Alocação dinâmica de memória com Malloc();
-- Liberação de memória com free();
+- Vetor de Registro;
+- Busca Sequencial;
 - Manipulação de arquivos CSV;
-- Busca sequencial;
 - Validação de entradas.
-- Tratamento de estruturas vazias
-- Tratamento de estruturas cheias
 
 ---
 
