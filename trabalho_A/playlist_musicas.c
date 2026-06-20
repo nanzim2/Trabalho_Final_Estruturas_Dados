@@ -1,27 +1,23 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <locale.h> 
 
 #define ARQUIVO_CSV "playlist.csv"
 #define MAX_MUSICAS 100
 
+// Definições de cores ANSI simples
+#define ANSI_RED     "\033[1;31m"
+#define ANSI_GREEN   "\033[1;32m"
+#define ANSI_RESET   "\033[0m"
 
 typedef struct Musica {
     int id;
     char titulo[50];
     char artista[50];
-    int duracao; // em segundos
+    int duracao;
     char genero[30];
 } Musica;
-
-// Definição do Nó da Lista Duplamente Encadeada 
-typedef struct Node {
-    Musica dado;
-    struct Node* anterior;
-    struct Node* proximo;
-} Node;
-
-int qtdMusicas = 0;
 
 void limparBuffer() {
     int c;
@@ -38,71 +34,38 @@ void pausarELimpar() {
     #endif
 }
 
-// Função para buscar uma música pelo ID
-Node* buscarPorId(Node* inicio, int id) {
-    Node* atual = inicio;
-    while (atual != NULL) {
-        if (atual->dado.id == id) {
-            return atual;
+int buscarPorId(Musica playlist[], int qtd, int id) {
+    for (int i = 0; i < qtd; i++) {
+        if (playlist[i].id == id) {
+            return i; 
         }
-        atual = atual->proximo;
     }
-    return NULL;
+    return -1;
 }
 
-// Inserção no fim da lista com controle de limite máximo
-void inserirNoFim(Node** inicio, Node** fim, Musica novaMusica) {
-    // Tratamento de Estrutura Cheia 
-    if (qtdMusicas >= MAX_MUSICAS) {
-        printf("\n[ERRO] Estrutura Cheia! Limite de %d musicas atingido.\n", MAX_MUSICAS);
-        return;
-    }
-
-    Node* novoNo = (Node*)malloc(sizeof(Node));
-    if (novoNo == NULL) {
-        printf("\n[ERRO] Falha na alocacao de memoria!\n");
-        return;
-    }
-    novoNo->dado = novaMusica;
-    novoNo->proximo = NULL;
-
-    if (*inicio == NULL) {
-        novoNo->anterior = NULL;
-        *inicio = novoNo;
-        *fim = novoNo;
-    } else {
-        novoNo->anterior = *fim;
-        (*fim)->proximo = novoNo;
-        *fim = novoNo;
-    }
-    qtdMusicas++; // Incrementa contador
-}
-
-// 1. Cadastrar Música (Com verificação de chave duplicada e estrutura cheia)
-void inserirMusica(Node** inicio, Node** fim) {
-    // Tratamento prévio de Estrutura Cheia
-    if (qtdMusicas >= MAX_MUSICAS) {
-        printf("\n[ERRO] Não é possível cadastrar. A playlist está cheia (%d/%d).\n", qtdMusicas, MAX_MUSICAS);
+// 1. Cadastro de Música
+void inserirMusica(Musica playlist[], int *qtd) {
+    if (*qtd >= MAX_MUSICAS) {
+        printf("\n" ANSI_RED "[ERRO]" ANSI_RESET " Não foi possível cadastrar. A playlist está cheia (%d/%d).\n", *qtd, MAX_MUSICAS);
         return;
     }
 
     Musica m;
-    printf("\n--- Cadastrar Nova Musica (%d/%d) ---\n", qtdMusicas, MAX_MUSICAS);
-    printf("Digite o ID unico: ");
+    printf("\n--- Cadastrar Nova Música (%d/%d) ---\n", *qtd, MAX_MUSICAS);
+    printf("Digite o ID único: ");
     if (scanf("%d", &m.id) != 1) {
-        printf("\n[ERRO] Entrada invalida de ID.\n");
+        printf("\n" ANSI_RED "[ERRO]" ANSI_RESET " Entrada inválida de ID.\n");
         limparBuffer();
         return;
     }
     limparBuffer();
 
-    // Validação de ID único
-    if (buscarPorId(*inicio, m.id) != NULL) {
-        printf("\n[ERRO] Já existe uma música cadastrada com o ID %d!\n", m.id);
+    if (buscarPorId(playlist, *qtd, m.id) != -1) {
+        printf("\n" ANSI_RED "[ERRO]" ANSI_RESET " Já existe uma música cadastrada com o ID %d!\n", m.id);
         return;
     }
 
-    printf("Titulo: ");
+    printf("Título: ");
     fgets(m.titulo, 50, stdin);
     m.titulo[strcspn(m.titulo, "\n")] = '\0';
 
@@ -110,146 +73,145 @@ void inserirMusica(Node** inicio, Node** fim) {
     fgets(m.artista, 50, stdin);
     m.artista[strcspn(m.artista, "\n")] = '\0';
 
-    printf("Duracao (em segundos): ");
+    printf("Duração (em segundos): ");
     if (scanf("%d", &m.duracao) != 1 || m.duracao <= 0) {
-        printf("\n[ERRO] Entrada invalida de duração.\n");
+        printf("\n" ANSI_RED "[ERRO]" ANSI_RESET " Entrada inválida de duração.\n");
         limparBuffer();
         return;
     }
     limparBuffer();
 
-    printf("Genero: ");
+    printf("Gênero: ");
     fgets(m.genero, 30, stdin);
     m.genero[strcspn(m.genero, "\n")] = '\0';
 
-    inserirNoFim(inicio, fim, m);
-    printf("\n[SUCESSO] Música \"%s\" cadastrada com sucesso!\n", m.titulo);
+    playlist[*qtd] = m;
+    (*qtd)++; 
+
+    printf("\n" ANSI_GREEN "[SUCESSO]" ANSI_RESET " Música \"%s\" cadastrada com sucesso!\n", m.titulo);
 }
 
-// 2. Listar todas as músicas (Tratamento de estrutura vazia)
-void listarPlaylist(Node* inicio) {
-    // Tratamento de Estrutura Vazia
-    if (inicio == NULL || qtdMusicas == 0) {
-        printf("\n[AVISO] A playlist esta vazia (0/%d musicas).\n", MAX_MUSICAS);
+// 2. Listagem de todas as músicas 
+void listarPlaylist(Musica playlist[], int qtd) {
+    if (qtd == 0) {
+        printf("\n" ANSI_RED "[AVISO]" ANSI_RESET " A playlist está vazia (0/%d músicas).\n", MAX_MUSICAS);
         return;
     }
 
-    printf("\n==================== PLAYLIST (%d/%d) ====================\n", qtdMusicas, MAX_MUSICAS);
-    Node* atual = inicio;
-    while (atual != NULL) {
-        int min = atual->dado.duracao / 60;
-        int seg = atual->dado.duracao % 60;
+    printf("\n==================== PLAYLIST (%d/%d) ====================\n", qtd, MAX_MUSICAS);
+    for (int i = 0; i < qtd; i++) {
+        int min = playlist[i].duracao / 60;
+        int seg = playlist[i].duracao % 60;
         
-        printf("ID: %d | %s - %s [%02d:%02d] | Genero: %s\n", 
-               atual->dado.id, atual->dado.titulo, atual->dado.artista, min, seg, atual->dado.genero);
-        atual = atual->proximo;
+        printf("ID: %d | %s - %s [%02d:%02d] | Gênero: %s\n", 
+               playlist[i].id, playlist[i].titulo, playlist[i].artista, min, seg, playlist[i].genero);
     }
     printf("==================================================\n");
 }
 
 // 3. Buscar e exibir dados de uma música específica
-void buscarMusica(Node* inicio) {
-    if (inicio == NULL) {
-        printf("\n[AVISO] A estrutura esta vazia. Não há o que buscar.\n");
+void buscarMusica(Musica playlist[], int qtd) {
+    if (qtd == 0) {
+        printf("\n" ANSI_RED "[AVISO]" ANSI_RESET " A estrutura está vazia. Não há o que buscar.\n");
         return;
     }
 
     int id;
-    printf("\nDigite o ID da musica que deseja buscar: ");
+    printf("\nDigite o ID da música que deseja buscar: ");
     if (scanf("%d", &id) != 1) {
-        printf("\n[ERRO] Entrada invalida.\n");
+        printf("\n" ANSI_RED "[ERRO]" ANSI_RESET " Entrada inválida.\n");
         limparBuffer();
         return;
     }
     limparBuffer();
 
-    Node* encontrado = buscarPorId(inicio, id);
-    if (encontrado == NULL) {
-        printf("\n[AVISO] Música com ID %d não encontrada.\n", id);
+    int pos = buscarPorId(playlist, qtd, id);
+    if (pos == -1) {
+        printf("\n" ANSI_RED "[AVISO]" ANSI_RESET " Música com ID %d não encontrada.\n", id);
     } else {
-        int min = encontrado->dado.duracao / 60;
-        int seg = encontrado->dado.duracao % 60;
+        int min = playlist[pos].duracao / 60;
+        int seg = playlist[pos].duracao % 60;
         printf("\n--- Música Encontrada ---\n");
-        printf("ID: %d\n", encontrado->dado.id);
-        printf("Titulo: %s\n", encontrado->dado.titulo);
-        printf("Artista: %s\n", encontrado->dado.artista);
-        printf("Duracao: %02d:%02d\n", min, seg);
-        printf("Genero: %s\n", encontrado->dado.genero);
+        printf("ID: %d\n", playlist[pos].id);
+        printf("Título: %s\n", playlist[pos].titulo);
+        printf("Artista: %s\n", playlist[pos].artista);
+        printf("Duração: %02d:%02d\n", min, seg);
+        printf("Gênero: %s\n", playlist[pos].genero);
     }
 }
 
-// 4. Editar dados de uma música (Campos não-chave)
-void editarMusica(Node* inicio) {
-    if (inicio == NULL) {
-        printf("\n[AVISO] A estrutura está vazia. Não há o que editar.\n");
+// 4. Editar dados de uma música
+void editarMusica(Musica playlist[], int qtd) {
+    if (qtd == 0) {
+        printf("\n" ANSI_RED "[AVISO]" ANSI_RESET " A estrutura está vazia. Não há o que editar.\n");
         return;
     }
 
     int id;
-    printf("\nDigite o ID da musica que deseja editar: ");
+    printf("\nDigite o ID da música que deseja editar: ");
     if (scanf("%d", &id) != 1) {
-        printf("\n[ERRO] Entrada invalida.\n");
+        printf("\n" ANSI_RED "[ERRO]" ANSI_RESET " Entrada inválida.\n");
         limparBuffer();
         return;
     }
     limparBuffer();
 
-    Node* encontrado = buscarPorId(inicio, id);
-    if (encontrado == NULL) {
-        printf("\n[AVISO] Música com ID %d não encontrada.\n", id);
+    int pos = buscarPorId(playlist, qtd, id);
+    if (pos == -1) {
+        printf("\n" ANSI_RED "[AVISO]" ANSI_RESET " Música com ID %d não encontrada.\n", id);
         return;
     }
 
-    printf("\n--- Editando: %s ---\n", encontrado->dado.titulo);
+    printf("\n--- Editando: %s ---\n", playlist[pos].titulo);
 
-    printf("Novo Titulo: ");
-    fgets(encontrado->dado.titulo, 50, stdin);
-    encontrado->dado.titulo[strcspn(encontrado->dado.titulo, "\n")] = '\0';
+    printf("Novo Título: ");
+    fgets(playlist[pos].titulo, 50, stdin);
+    playlist[pos].titulo[strcspn(playlist[pos].titulo, "\n")] = '\0';
 
     printf("Novo Artista: ");
-    fgets(encontrado->dado.artista, 50, stdin);
-    encontrado->dado.artista[strcspn(encontrado->dado.artista, "\n")] = '\0';
+    fgets(playlist[pos].artista, 50, stdin);
+    playlist[pos].artista[strcspn(playlist[pos].artista, "\n")] = '\0';
 
-    printf("Nova Duracao (em segundos): ");
-    if (scanf("%d", &encontrado->dado.duracao) != 1 || encontrado->dado.duracao <= 0) {
-        printf("\n[ERRO] Entrada invalida.\n");
+    printf("Nova Duração (em segundos): ");
+    if (scanf("%d", &playlist[pos].duracao) != 1 || playlist[pos].duracao <= 0) {
+        printf("\n" ANSI_RED "[ERRO]" ANSI_RESET " Entrada inválida.\n");
         limparBuffer();
         return;
     }
     limparBuffer();
 
-    printf("Novo Genero: ");
-    fgets(encontrado->dado.genero, 30, stdin);
-    encontrado->dado.genero[strcspn(encontrado->dado.genero, "\n")] = '\0';
+    printf("Novo Gênero: ");
+    fgets(playlist[pos].genero, 30, stdin);
+    playlist[pos].genero[strcspn(playlist[pos].genero, "\n")] = '\0';
 
-    printf("\n[SUCESSO] Dados atualizados com sucesso!\n");
+    printf("\n" ANSI_GREEN "[SUCESSO]" ANSI_RESET " Dados atualizados com sucesso!\n");
 }
 
-// 5. Excluir Música da playlist (Tratamento de estrutura vazia)
-void excluirMusica(Node** inicio, Node** fim) {
-    if (*inicio == NULL) {
-        printf("\n[AVISO] A estrutura esta vazia. Não há o que remover.\n");
+// 5. Excluir Música 
+void excluirMusica(Musica playlist[], int *qtd) {
+    if (*qtd == 0) {
+        printf("\n" ANSI_RED "[AVISO]" ANSI_RESET " A estrutura está vazia. Não há o que remover.\n");
         return;
     }
 
     int id;
     char confirmacao;
 
-    printf("\nDigite o ID da musica que deseja excluir: ");
+    printf("\nDigite o ID da música que deseja excluir: ");
     if (scanf("%d", &id) != 1) {
-        printf("\n[ERRO] Entrada invalida.\n");
+        printf("\n" ANSI_RED "[ERRO]" ANSI_RESET " Entrada inválida.\n");
         limparBuffer();
         return;
     }
     limparBuffer();
 
-    Node* deletar = buscarPorId(*inicio, id);
-    if (deletar == NULL) {
-        printf("\n[AVISO] Música com ID %d não encontrada.\n", id);
+    int pos = buscarPorId(playlist, *qtd, id);
+    if (pos == -1) {
+        printf("\n" ANSI_RED "[AVISO]" ANSI_RESET " Música com ID %d não encontrada.\n", id);
         return;
     }
 
-    printf("Tem certeza que deseja excluir a música \"%s\"? (S/N): ", deletar->dado.titulo);
+    printf("Tem certeza que deseja excluir a música \"%s\"? (S/N): ", playlist[pos].titulo);
     scanf(" %c", &confirmacao);
     limparBuffer();
 
@@ -258,58 +220,41 @@ void excluirMusica(Node** inicio, Node** fim) {
         return;
     }
 
-    if (deletar == *inicio && deletar == *fim) {
-        *inicio = NULL;
-        *fim = NULL;
+    for (int i = pos; i < (*qtd) - 1; i++) {
+        playlist[i] = playlist[i + 1];
     }
-    else if (deletar == *inicio) {
-        *inicio = deletar->proximo;
-        (*inicio)->anterior = NULL;
-    }
-    else if (deletar == *fim) {
-        *fim = deletar->anterior;
-        (*fim)->proximo = NULL;
-    }
-    else {
-        deletar->anterior->proximo = deletar->proximo;
-        deletar->proximo->anterior = deletar->anterior;
-    }
-
-    free(deletar);
-    qtdMusicas--; // Decrementa contador (Controle da estrutura)
-    printf("\n[SUCESSO] Música removida da playlist.\n");
+    
+    (*qtd)--; 
+    printf("\n" ANSI_GREEN "[SUCESSO]" ANSI_RESET " Música removida da playlist.\n");
 }
 
-// 6. Salvar dados em formato CSV
-void salvarCSV(Node* inicio) {
+void salvarCSV(Musica playlist[], int qtd) {
     FILE* arquivo = fopen(ARQUIVO_CSV, "w");
     if (arquivo == NULL) {
-        printf("\n[ERRO] Não foi possivel abrir o arquivo para salvar os dados!\n");
+        printf("\n" ANSI_RED "[ERRO]" ANSI_RESET " Não foi possível abrir o arquivo para salvar os dados!\n");
         return;
     }
 
     fprintf(arquivo, "id;titulo;artista;duracao;genero\n");
 
-    Node* atual = inicio;
-    while (atual != NULL) {
+    for (int i = 0; i < qtd; i++) {
         fprintf(arquivo, "%d;%s;%s;%d;%s\n", 
-                atual->dado.id, 
-                atual->dado.titulo, 
-                atual->dado.artista, 
-                atual->dado.duracao, 
-                atual->dado.genero);
-        atual = atual->proximo;
+                playlist[i].id, 
+                playlist[i].titulo, 
+                playlist[i].artista, 
+                playlist[i].duracao, 
+                playlist[i].genero);
     }
 
     fclose(arquivo);
-    printf("\n[SUCESSO] Dados salvos com sucesso em \"%s\"!\n", ARQUIVO_CSV);
+    printf("\n" ANSI_GREEN "[SUCESSO]" ANSI_RESET " Dados salvos com sucesso em \"%s\"!\n", ARQUIVO_CSV);
 }
 
-// 7. Carregar dados a partir do arquivo CSV
-void carregarCSV(Node** inicio, Node** fim) {
+// 6. Carregar dados a partir do arquivo CSV
+void carregarCSV(Musica playlist[], int *qtd) {
     FILE* arquivo = fopen(ARQUIVO_CSV, "r");
     if (arquivo == NULL) {
-        return;
+        return; 
     }
 
     char linha[200];
@@ -319,9 +264,8 @@ void carregarCSV(Node** inicio, Node** fim) {
     }
 
     while (fgets(linha, sizeof(linha), arquivo) != NULL) {
-        // Valida se o arquivo não vai estourar o limite máximo configurado
-        if (qtdMusicas >= MAX_MUSICAS) {
-            printf("[AVISO] Limite maximo atingido ao carregar o arquivo CSV.\n");
+        if (*qtd >= MAX_MUSICAS) {
+            printf(ANSI_RED "[AVISO]" ANSI_RESET " Limite máximo atingido ao carregar o arquivo CSV.\n");
             break;
         }
 
@@ -341,44 +285,65 @@ void carregarCSV(Node** inicio, Node** fim) {
         token = strtok(NULL, ";\n");
         if (token != NULL) strcpy(m.genero, token);
 
-        inserirNoFim(inicio, fim, m);
+        if (buscarPorId(playlist, *qtd, m.id) == -1) {
+            playlist[*qtd] = m;
+            (*qtd)++;
+        } else {
+            printf(ANSI_RED "[AVISO]" ANSI_RESET " ID duplicado encontrado no CSV (%d). Registro ignorado.\n", m.id);
+        }
     }
 
     fclose(arquivo);
-    printf("[SISTEMA] Playlist anterior carregada com sucesso (%d musicas)!\n", qtdMusicas);
+    printf("[SISTEMA] Playlist anterior carregada com sucesso (%d músicas)!\n", *qtd);
 }
 
-// Liberação de memória ao fechar o programa
-void liberarLista(Node* inicio) {
-    Node* atual = inicio;
-    while (atual != NULL) {
-        Node* proximo = atual->proximo;
-        free(atual);
-        atual = proximo;
+// 7. Estatísticas da playlist
+void mostrarEstatisticas(Musica playlist[], int qtd) {
+    if (qtd == 0) {
+        printf("\nPlaylist vazia.\n");
+        return;
     }
-    qtdMusicas = 0;
+
+    int tempoTotal = 0;
+    for (int i = 0; i < qtd; i++) {
+        tempoTotal += playlist[i].duracao;
+    }
+
+    printf("\n===== ESTATÍSTICAS =====\n");
+    printf("Total de músicas cadastradas: %d/%d\n", qtd, MAX_MUSICAS);
+    printf("Tempo total de reprodução: %d minutos e %d segundos\n",
+           tempoTotal / 60,
+           tempoTotal % 60);
 }
 
 int main() {
-    Node* playlistInicio = NULL;
-    Node* playlistFim = NULL;
+    setlocale(LC_ALL, "Portuguese");
+
+    Musica playlist[MAX_MUSICAS];
+    int qtdMusicas = 0; 
     int opcao;
 
-    carregarCSV(&playlistInicio, &playlistFim);
+    carregarCSV(playlist, &qtdMusicas);
 
     do {
-        printf("\n======= MENU PLAYLIST =======\n");
-        printf("1. Cadastrar Música\n");
-        printf("2. Listar Playlist\n");
-        printf("3. Buscar por ID\n");
-        printf("4. Editar Musica\n");
-        printf("5. Excluir Musica\n");
-        printf("6. Salvar Dados (CSV)\n");
-        printf("0. Sair\n");
-        printf("Escolha uma opção: ");
+        // Menu Playlist
+        printf("\n");
+        printf("     ;;;;;;;;;;;;;;;;;;;    ======= MENU PLAYLIST =======\n");
+        printf("     ;;;;;;;;;;;;;;;;;;;    |1. Cadastrar Música        |\n");   
+        printf("     ;                 ;    |2. Listar Playlist         |\n");
+        printf("     ;                 ;    |3. Buscar por ID           |\n");
+        printf("     ;                 ;    |4. Editar Música           |\n");
+        printf("     ;                 ;    |5. Excluir Música          |\n");
+        printf("     ;                 ;    |6. Salvar Dados (CSV)      |\n");
+        printf("     ;                 ;    |7. Estatísticas            |\n");
+        printf("     ;                 ;    |0. Sair                    |\n");
+        printf(",;;;;;            ,;;;;;    =============================\n");
+        printf(";;;;;;            ;;;;;;\n");
+        printf("`;;;;'            `;;;;'\n");
+        printf("                             Escolha uma opção: ");
         
         if (scanf("%d", &opcao) != 1) {
-            printf("\n[ERRO] Por favor, digite um número.\n");
+            printf("\n" ANSI_RED "[ERRO]" ANSI_RESET " Por favor, digite um número.\n");
             limparBuffer();
             pausarELimpar();
             continue;
@@ -387,37 +352,40 @@ int main() {
 
         switch (opcao) {
             case 1:
-                inserirMusica(&playlistInicio, &playlistFim);
+                inserirMusica(playlist, &qtdMusicas);
                 pausarELimpar();
                 break;
             case 2:
-                listarPlaylist(playlistInicio);
+                listarPlaylist(playlist, qtdMusicas);
                 pausarELimpar();
                 break;
             case 3:
-                buscarMusica(playlistInicio);
+                buscarMusica(playlist, qtdMusicas);
                 pausarELimpar();
                 break;
             case 4:
-                editarMusica(playlistInicio);
+                editarMusica(playlist, qtdMusicas);
                 pausarELimpar();
                 break;
             case 5:
-                excluirMusica(&playlistInicio, &playlistFim);
+                excluirMusica(playlist, &qtdMusicas);
                 pausarELimpar();
                 break;
             case 6:
-                salvarCSV(playlistInicio);
+                salvarCSV(playlist, qtdMusicas);
+                pausarELimpar();
+                break;
+            case 7:
+                mostrarEstatisticas(playlist, qtdMusicas);
                 pausarELimpar();
                 break;
             case 0:
-                printf("\nSalvando alterações pendentes...\n");
-                salvarCSV(playlistInicio);
-                printf("Encerrando o programa e liberando mémoria...\n");
-                liberarLista(playlistInicio);
+                printf("\nSalvando alterações pendentes no arquivo CSV...\n");
+                salvarCSV(playlist, qtdMusicas);
+                printf("Encerrando o programa com segurança.\n");
                 break;
             default:
-                printf("\n[ERRO] Opção inválida!\n");
+                printf("\n" ANSI_RED "[ERRO]" ANSI_RESET " Opção inválida!\n");
                 pausarELimpar();
         }
     } while (opcao != 0);
