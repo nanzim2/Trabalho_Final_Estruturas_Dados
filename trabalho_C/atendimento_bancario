@@ -127,7 +127,9 @@ void limparBuffer() {
 }
 
 void pausar() {
-    printf("\n%sPressione ENTER para continuar...%s", AMARELO, RESET);
+    printf("\n");
+    printf("%s========================================%s\n", CIANO, RESET);
+    printf("%sPressione ENTER para voltar ao menu...%s", AMARELO, RESET);
     getchar();
 }
 
@@ -943,62 +945,68 @@ int main() {
 
         limparBuffer();
 
-        switch (opcao) {
-            case 1:
-                gerarSenha(&filaNormal, &filaPreferencial, &sistema);
-                break;
+switch (opcao) {
 
-            case 2:
-                chamarProximo(&filaNormal, &filaPreferencial, &sistema);
-                break;
+    case 1:
+        gerarSenha(&filaNormal, &filaPreferencial, &sistema);
+        break;
 
-            case 3:
-                consultarProximos(&filaNormal, &filaPreferencial);
-                break;
+    case 2:
+        chamarProximo(&filaNormal, &filaPreferencial, &sistema);
+        break;
 
-            case 4:
-                listarTodas(&filaNormal, &filaPreferencial);
-                break;
+    case 3:
+        consultarProximos(&filaNormal, &filaPreferencial);
+        break;
 
-            case 5:
-                buscarSenha(&filaNormal, &filaPreferencial);
-                break;
+    case 4:
+        listarTodas(&filaNormal, &filaPreferencial);
+        break;
 
-            case 6:
-                cancelarSenha(&filaNormal, &filaPreferencial);
-                break;
+    case 5:
+        buscarSenha(&filaNormal, &filaPreferencial);
+        break;
 
-            case 7:
-                salvarTudoCSV(&filaNormal, &filaPreferencial);
-                break;
+    case 6:
+        cancelarSenha(&filaNormal, &filaPreferencial);
+        break;
 
-            case 8:
-                carregarTudoCSV(&filaNormal, &filaPreferencial, &sistema);
-                break;
+    case 7:
+        salvarTudoCSV(&filaNormal, &filaPreferencial);
+        break;
 
-            case 9:
-                configurarPrioridade(&sistema);
-                break;
+    case 8:
+        carregarTudoCSV(&filaNormal, &filaPreferencial, &sistema);
+        break;
 
-            case 10:
-                mostrarEstatisticas(&filaNormal, &filaPreferencial, &sistema);
-                break;
+    case 9:
+        configurarPrioridade(&sistema);
+        break;
 
-            case 11:
-                mostrarRelatorio();
-                break;
+    case 10:
+        mostrarEstatisticas(&filaNormal, &filaPreferencial, &sistema);
+        break;
 
-            case 0:
-                titulo("ENCERRANDO");
-                salvarTudoCSV(&filaNormal, &filaPreferencial);
-                liberarFila(&filaNormal);
-                liberarFilaCircular(&filaPreferencial);
-                mensagemSucesso("Memoria liberada corretamente.");
-                break;
+    case 11:
+        mostrarRelatorio();
+        break;
 
-            default:
-                mensagemErro("Opcao invalida.");
-        }
+    case 0:
+        titulo("ENCERRANDO");
+        salvarTudoCSV(&filaNormal, &filaPreferencial);
+        liberarFila(&filaNormal);
+        liberarFilaCircular(&filaPreferencial);
+        mensagemSucesso("Memoria liberada corretamente.");
+        break;
+
+    default:
+        mensagemErro("Opcao invalida.");
+}
+
+if (opcao != 0) {
+    pausar();      // espera o ENTER
+    limparTela();  // limpa a tela
+}
 
     } while (opcao != 0);
 
