@@ -6,7 +6,7 @@
 #include <string.h>
 
 #define MAX 10
-
+// Desenvolvido no VSC em WINDOWS
 // PILHAS DINAMICAS LIFO = Última chamada a entrar será a primeira a sair
 /*=============================================================
     |   CAMPO    |   TIPO     |        DESCRIÇÂO          |

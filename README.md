@@ -82,9 +82,9 @@ Cada música possui:
 
 - Structs;
 - Ponteiros;
+- Vetor de Registro;
+- Busca Sequencial;
 - Manipulação de arquivos CSV;
-- Lista de registros;
-- Busca sequencial;
 - Validação de entradas.
 
 ---
