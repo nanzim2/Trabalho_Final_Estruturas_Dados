@@ -21,7 +21,7 @@
 struct registro{
     int protocolo;  // começa do 1001
     char local[50]; // cidade
-    char tipo[30]; // polia - samu - bombeiro
+    char tipo[30]; // policia - samu - bombeiro
     char horario[20]; // hh/mm
 };
 
@@ -44,7 +44,6 @@ void strLower(char *str){
 }
 
 void imprimir(struct registro r[], int topo, int idc){
-    system("cls");
     // verificar lista cheia
     if(topo == -1){
         printf("Nenhuma chamada registrada!\n");
@@ -59,6 +58,7 @@ void imprimir(struct registro r[], int topo, int idc){
         printf("Tipo: %s\n", r[idc].tipo);
         printf("Horario: %s\n", r[idc].horario);
     }else {
+        system("cls");
         for (int i = 0; i <= topo; i++){
             printf("Protocolo: %d\n", r[i].protocolo);
             printf("Local: %s\n", r[i].local);
@@ -159,6 +159,7 @@ void registrarChamada(struct registro r[], int *topo){
 
 void atenderChamada(struct registro r[], int *topo){
     system("cls");
+
     //verificar se esta vazia
     if(*topo == -1){
         printf("Nenhuma chamada registrada!\n");
@@ -170,7 +171,6 @@ void atenderChamada(struct registro r[], int *topo){
     imprimir(r, *topo, *topo);
 
     (*topo)--;
-    system("pause");
     return;
 }
 
@@ -222,8 +222,10 @@ void carregarCSV(){
                   novo.tipo,
                   novo.horario) == 4){
 
-            topo++;
-            rg[topo] = novo;
+            if(topo < MAX - 1){
+                topo++;
+                rg[topo] = novo;
+            }
 
             if(novo.protocolo > protocoloAtual){
                 protocoloAtual = novo.protocolo;
