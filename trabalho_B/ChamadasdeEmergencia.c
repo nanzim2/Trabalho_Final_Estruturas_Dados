@@ -44,6 +44,7 @@ void strLower(char *str){
 }
 
 void imprimir(struct registro r[], int topo, int idc){
+    system("cls");
     // verificar lista cheia
     if(topo == -1){
         printf("Nenhuma chamada registrada!\n");
@@ -58,7 +59,6 @@ void imprimir(struct registro r[], int topo, int idc){
         printf("Tipo: %s\n", r[idc].tipo);
         printf("Horario: %s\n", r[idc].horario);
     }else {
-        system("cls");
         for (int i = 0; i <= topo; i++){
             printf("Protocolo: %d\n", r[i].protocolo);
             printf("Local: %s\n", r[i].local);
@@ -66,8 +66,8 @@ void imprimir(struct registro r[], int topo, int idc){
             printf("Horario: %s\n", r[i].horario);
             printf("-------------------\n");
         }
-        system("pause");
     }
+    system("pause");
     return;
 }
 
