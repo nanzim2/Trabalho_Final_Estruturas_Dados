@@ -108,7 +108,7 @@ void registrarChamada(struct registro r[], int *topo){
 
     // Tipo
     do{
-        printf("Digite o tipo da emergência(policia, samu, bombeiro): ");
+        printf("Digite o tipo da emergencia(policia, samu, bombeiro): ");
         fgets(novo.tipo, sizeof(novo.tipo), stdin);
         novo.tipo[strcspn(novo.tipo, "\n")] = '\0'; // substitui o \n pelo \0
         strLower(novo.tipo);
@@ -117,7 +117,7 @@ void registrarChamada(struct registro r[], int *topo){
         if(strcmp(novo.tipo, "policia") != 0 &&
            strcmp(novo.tipo, "samu") != 0 &&
            strcmp(novo.tipo, "bombeiro") != 0){
-            printf("Tipo inválido\n");
+            printf("Tipo invalido\n");
             Sleep(2000);
             pass = false;
         } else{
